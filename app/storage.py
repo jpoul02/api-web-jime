@@ -1,27 +1,22 @@
-import boto3
+import cloudinary
+import cloudinary.uploader
 import os
 import uuid
 from fastapi import UploadFile
 
-def _get_client():
-    return boto3.client(
-        "s3",
-        endpoint_url=f"https://{os.getenv('R2_ACCOUNT_ID')}.r2.cloudflarestorage.com",
-        aws_access_key_id=os.getenv("R2_ACCESS_KEY_ID"),
-        aws_secret_access_key=os.getenv("R2_SECRET_ACCESS_KEY"),
-        region_name="auto",
-    )
+cloudinary.config(
+    cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
+    api_key=os.getenv("CLOUDINARY_API_KEY"),
+    api_secret=os.getenv("CLOUDINARY_API_SECRET"),
+)
 
 async def upload_file(file: UploadFile, folder: str) -> str:
-    """Upload a file to R2 and return its public URL."""
-    ext = file.filename.rsplit(".", 1)[-1] if "." in file.filename else "bin"
-    key = f"{folder}/{uuid.uuid4()}.{ext}"
+    """Upload a file to Cloudinary and return its secure URL."""
     contents = await file.read()
-    client = _get_client()
-    client.put_object(
-        Bucket=os.getenv("R2_BUCKET_NAME"),
-        Key=key,
-        Body=contents,
-        ContentType=file.content_type or "application/octet-stream",
+    public_id = f"{folder}/{uuid.uuid4()}"
+    result = cloudinary.uploader.upload(
+        contents,
+        public_id=public_id,
+        resource_type="auto",
     )
-    return f"{os.getenv('R2_PUBLIC_URL')}/{key}"
+    return result["secure_url"]
