@@ -11,7 +11,7 @@ load_dotenv()
 from app.models import Base  # noqa: must import after load_dotenv
 
 config = context.config
-_db_url = os.getenv("DATABASE_URL", "").replace("postgresql://", "postgresql+asyncpg://", 1)
+_db_url = os.getenv("DATABASE_URL", "").replace("postgres://", "postgresql+asyncpg://", 1).replace("postgresql://", "postgresql+asyncpg://", 1)
 config.set_main_option("sqlalchemy.url", _db_url)
 
 if config.config_file_name is not None:

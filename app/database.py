@@ -4,7 +4,7 @@ from sqlalchemy.orm import DeclarativeBase
 import os
 
 _raw_url = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./test.db")
-DATABASE_URL = _raw_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+DATABASE_URL = _raw_url.replace("postgres://", "postgresql+asyncpg://", 1).replace("postgresql://", "postgresql+asyncpg://", 1)
 
 engine = create_async_engine(DATABASE_URL, echo=False)
 async_session_factory = async_sessionmaker(engine, expire_on_commit=False)
