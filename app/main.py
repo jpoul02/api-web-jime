@@ -41,8 +41,8 @@ async def _seed():
             "Del 1 al 10, ¿qué tan dramática es Jime? Danos los detalles.",
             "¿Cuál es el meme que más la representa?",
         ]
-        for text in texts:
-            session.add(Question(text=text))
+        for q_text in texts:
+            session.add(Question(text=q_text))
         await session.commit()
 
 @asynccontextmanager
