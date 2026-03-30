@@ -1,3 +1,4 @@
+import asyncio
 import cloudinary
 import cloudinary.uploader
 import os
@@ -11,12 +12,18 @@ cloudinary.config(
 )
 
 async def upload_file(file: UploadFile, folder: str) -> str:
-    """Upload a file to Cloudinary and return its secure URL."""
+    """Upload a file to Cloudinary without blocking the event loop."""
     contents = await file.read()
     public_id = f"{folder}/{uuid.uuid4()}"
-    result = cloudinary.uploader.upload(
+    result = await asyncio.to_thread(
+        cloudinary.uploader.upload,
         contents,
         public_id=public_id,
         resource_type="auto",
     )
     return result["secure_url"]
+
+async def maybe_upload(file: UploadFile | None, folder: str) -> str | None:
+    if file is None:
+        return None
+    return await upload_file(file, folder)
