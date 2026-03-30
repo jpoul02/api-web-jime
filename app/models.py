@@ -13,6 +13,7 @@ class Postal(Base):
     __tablename__ = "postales"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(String(120), nullable=False)
+    dedicatoria: Mapped[str | None] = mapped_column(String, nullable=True)
     profile_photo_url: Mapped[str | None] = mapped_column(String, nullable=True)
     video_url: Mapped[str | None] = mapped_column(String, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())

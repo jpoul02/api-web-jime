@@ -15,13 +15,14 @@ async def get_random_questions(db: AsyncSession, count: int, exclude: list[int])
 async def create_postal(
     db: AsyncSession,
     name: str,
+    dedicatoria: str | None,
     profile_photo_url: str | None,
     video_url: str | None,
     answers: list[AnswerIn],
     photo_urls: list[str],
 ) -> Postal:
     from sqlalchemy.orm import selectinload
-    postal = Postal(name=name, profile_photo_url=profile_photo_url, video_url=video_url)
+    postal = Postal(name=name, dedicatoria=dedicatoria, profile_photo_url=profile_photo_url, video_url=video_url)
     db.add(postal)
     await db.flush()
     for ans in answers:
@@ -43,6 +44,14 @@ async def get_postales(db: AsyncSession) -> list[Postal]:
         select(Postal).options(selectinload(Postal.photos)).order_by(Postal.created_at.desc())
     )
     return result.scalars().all()
+
+async def delete_postal(db: AsyncSession, postal_id: int) -> bool:
+    postal = await db.get(Postal, postal_id)
+    if not postal:
+        return False
+    await db.delete(postal)
+    await db.commit()
+    return True
 
 async def get_postal(db: AsyncSession, postal_id: int) -> Postal | None:
     from sqlalchemy.orm import selectinload

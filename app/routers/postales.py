@@ -13,6 +13,7 @@ router = APIRouter(prefix="/postales", tags=["postales"])
 @router.post("", response_model=PostalOut, status_code=201)
 async def create_postal(
     name: str = Form(...),
+    dedicatoria: str | None = Form(default=None),
     answers: str = Form(default="[]"),
     profile_photo: UploadFile | None = File(default=None),
     video: UploadFile | None = File(default=None),
@@ -21,7 +22,6 @@ async def create_postal(
 ):
     valid_photos = [p for p in photos if p.size]
 
-    # Upload all files in parallel — profile, video, and all photos at once
     results = await asyncio.gather(
         maybe_upload(profile_photo, "profiles"),
         maybe_upload(video, "videos"),
@@ -33,7 +33,9 @@ async def create_postal(
     photo_urls = list(results[2:])
 
     answers_parsed = [AnswerIn(**a) for a in json.loads(answers)]
-    return await crud.create_postal(db, name, profile_photo_url, video_url, answers_parsed, photo_urls)
+    return await crud.create_postal(
+        db, name, dedicatoria, profile_photo_url, video_url, answers_parsed, photo_urls
+    )
 
 @router.get("", response_model=list[PostalListItem])
 async def list_postales(db: AsyncSession = Depends(get_db)):
@@ -45,3 +47,9 @@ async def get_postal(postal_id: int, db: AsyncSession = Depends(get_db)):
     if not postal:
         raise HTTPException(status_code=404, detail="Postal not found")
     return postal
+
+@router.delete("/{postal_id}", status_code=204)
+async def delete_postal(postal_id: int, db: AsyncSession = Depends(get_db)):
+    deleted = await crud.delete_postal(db, postal_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Postal not found")

@@ -27,6 +27,7 @@ class AnswerOut(BaseModel):
 class PostalOut(BaseModel):
     id: int
     name: str
+    dedicatoria: str | None = None
     profile_photo_url: str | None
     video_url: str | None
     created_at: datetime
@@ -37,6 +38,7 @@ class PostalOut(BaseModel):
 class PostalListItem(BaseModel):
     id: int
     name: str
+    dedicatoria: str | None = None
     profile_photo_url: str | None
     created_at: datetime
     model_config = {"from_attributes": True}

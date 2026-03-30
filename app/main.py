@@ -10,11 +10,16 @@ load_dotenv()
 from app.database import engine, async_session_factory, Base
 from app.models import Question
 from app.routers import questions, postales
+from sqlalchemy import text
 
 async def _seed():
     from sqlalchemy import select
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        # Add dedicatoria column to existing deployments that predate the field
+        await conn.execute(text(
+            "ALTER TABLE postales ADD COLUMN IF NOT EXISTS dedicatoria TEXT"
+        ))
     async with async_session_factory() as session:
         result = await session.execute(select(Question))
         if result.scalars().first():
