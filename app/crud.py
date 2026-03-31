@@ -47,11 +47,9 @@ async def get_postales(db: AsyncSession) -> list[Postal]:
 
 async def get_feed_postales(db: AsyncSession, skip: int = 0, limit: int = 10) -> list[Postal]:
     from sqlalchemy.orm import selectinload
-    from sqlalchemy import exists
     stmt = (
         select(Postal)
         .options(selectinload(Postal.photos))
-        .where(exists().where(Photo.postal_id == Postal.id))
         .order_by(Postal.created_at.desc())
         .offset(skip)
         .limit(limit)
