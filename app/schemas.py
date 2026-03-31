@@ -42,3 +42,17 @@ class PostalListItem(BaseModel):
     profile_photo_url: str | None
     created_at: datetime
     model_config = {"from_attributes": True}
+
+class FeedPhotoItem(BaseModel):
+    id: int
+    photo_url: str
+    model_config = {"from_attributes": True}
+
+class FeedItem(BaseModel):
+    id: int
+    name: str
+    dedicatoria: str | None = None
+    profile_photo_url: str | None
+    created_at: datetime
+    photos: list[FeedPhotoItem] = []
+    model_config = {"from_attributes": True}

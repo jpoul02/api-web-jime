@@ -45,6 +45,20 @@ async def get_postales(db: AsyncSession) -> list[Postal]:
     )
     return result.scalars().all()
 
+async def get_feed_postales(db: AsyncSession, skip: int = 0, limit: int = 10) -> list[Postal]:
+    from sqlalchemy.orm import selectinload
+    from sqlalchemy import exists
+    stmt = (
+        select(Postal)
+        .options(selectinload(Postal.photos))
+        .where(exists().where(Photo.postal_id == Postal.id))
+        .order_by(Postal.created_at.desc())
+        .offset(skip)
+        .limit(limit)
+    )
+    result = await db.execute(stmt)
+    return result.scalars().all()
+
 async def delete_postal(db: AsyncSession, postal_id: int) -> bool:
     postal = await db.get(Postal, postal_id)
     if not postal:
