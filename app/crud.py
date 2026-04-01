@@ -1,7 +1,7 @@
 # app/crud.py
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
-from app.models import Question, Postal, Answer, Photo
+from app.models import Question, Postal, Answer, Photo, PopularSong, Album, AlbumTrack
 from app.schemas import AnswerIn
 
 async def get_random_questions(db: AsyncSession, count: int, exclude: list[int]) -> list[Question]:
@@ -73,3 +73,122 @@ async def get_postal(db: AsyncSession, postal_id: int) -> Postal | None:
         .where(Postal.id == postal_id)
     )
     return result.scalar_one_or_none()
+
+# ── Music ─────────────────────────────────────────────────────────────────────
+
+async def get_popular_songs(db: AsyncSession) -> list[PopularSong]:
+    result = await db.execute(select(PopularSong).order_by(PopularSong.order, PopularSong.id))
+    return result.scalars().all()
+
+async def create_popular_song(db: AsyncSession, title: str, cover_url: str | None, audio_url: str | None) -> PopularSong:
+    count_result = await db.execute(select(func.count()).select_from(PopularSong))
+    count = count_result.scalar_one()
+    song = PopularSong(title=title, cover_url=cover_url, audio_url=audio_url, order=count)
+    db.add(song)
+    await db.commit()
+    await db.refresh(song)
+    return song
+
+async def update_popular_song(db: AsyncSession, song_id: int, title: str | None, cover_url: str | None, audio_url: str | None) -> PopularSong | None:
+    song = await db.get(PopularSong, song_id)
+    if not song:
+        return None
+    if title is not None:
+        song.title = title
+    if cover_url is not None:
+        song.cover_url = cover_url
+    if audio_url is not None:
+        song.audio_url = audio_url
+    await db.commit()
+    await db.refresh(song)
+    return song
+
+async def delete_popular_song(db: AsyncSession, song_id: int) -> bool:
+    song = await db.get(PopularSong, song_id)
+    if not song:
+        return False
+    await db.delete(song)
+    await db.commit()
+    return True
+
+async def reorder_popular_songs(db: AsyncSession, ordered_ids: list[int]) -> list[PopularSong]:
+    for i, song_id in enumerate(ordered_ids):
+        song = await db.get(PopularSong, song_id)
+        if song:
+            song.order = i
+    await db.commit()
+    return await get_popular_songs(db)
+
+async def get_albums(db: AsyncSession) -> list[Album]:
+    from sqlalchemy.orm import selectinload
+    result = await db.execute(
+        select(Album).options(selectinload(Album.tracks)).order_by(Album.order, Album.id)
+    )
+    return result.scalars().all()
+
+async def create_album(db: AsyncSession, title: str, cover_url: str | None, year: int | None) -> Album:
+    from sqlalchemy.orm import selectinload
+    count_result = await db.execute(select(func.count()).select_from(Album))
+    count = count_result.scalar_one()
+    album = Album(title=title, cover_url=cover_url, year=year, order=count)
+    db.add(album)
+    await db.commit()
+    result = await db.execute(select(Album).options(selectinload(Album.tracks)).where(Album.id == album.id))
+    return result.scalar_one()
+
+async def update_album(db: AsyncSession, album_id: int, title: str | None, cover_url: str | None, year: int | None) -> Album | None:
+    from sqlalchemy.orm import selectinload
+    album = await db.get(Album, album_id)
+    if not album:
+        return None
+    if title is not None:
+        album.title = title
+    if cover_url is not None:
+        album.cover_url = cover_url
+    if year is not None:
+        album.year = year
+    await db.commit()
+    result = await db.execute(select(Album).options(selectinload(Album.tracks)).where(Album.id == album_id))
+    return result.scalar_one()
+
+async def delete_album(db: AsyncSession, album_id: int) -> bool:
+    album = await db.get(Album, album_id)
+    if not album:
+        return False
+    await db.delete(album)
+    await db.commit()
+    return True
+
+async def add_track_to_album(db: AsyncSession, album_id: int, title: str, audio_url: str | None) -> AlbumTrack | None:
+    album = await db.get(Album, album_id)
+    if not album:
+        return None
+    count_result = await db.execute(
+        select(func.count()).select_from(AlbumTrack).where(AlbumTrack.album_id == album_id)
+    )
+    count = count_result.scalar_one()
+    track = AlbumTrack(album_id=album_id, title=title, audio_url=audio_url, order=count)
+    db.add(track)
+    await db.commit()
+    await db.refresh(track)
+    return track
+
+async def update_track(db: AsyncSession, track_id: int, title: str | None, audio_url: str | None) -> AlbumTrack | None:
+    track = await db.get(AlbumTrack, track_id)
+    if not track:
+        return None
+    if title is not None:
+        track.title = title
+    if audio_url is not None:
+        track.audio_url = audio_url
+    await db.commit()
+    await db.refresh(track)
+    return track
+
+async def delete_track(db: AsyncSession, track_id: int) -> bool:
+    track = await db.get(AlbumTrack, track_id)
+    if not track:
+        return False
+    await db.delete(track)
+    await db.commit()
+    return True

@@ -56,3 +56,29 @@ class FeedItem(BaseModel):
     created_at: datetime
     photos: list[FeedPhotoItem] = []
     model_config = {"from_attributes": True}
+
+# ── Music ────────────────────────────────────────────────────────────────────
+
+class PopularSongOut(BaseModel):
+    id: int
+    title: str
+    cover_url: str | None = None
+    audio_url: str | None = None
+    order: int
+    model_config = {"from_attributes": True}
+
+class AlbumTrackOut(BaseModel):
+    id: int
+    title: str
+    audio_url: str | None = None
+    order: int
+    model_config = {"from_attributes": True}
+
+class AlbumOut(BaseModel):
+    id: int
+    title: str
+    cover_url: str | None = None
+    year: int | None = None
+    order: int
+    tracks: list[AlbumTrackOut] = []
+    model_config = {"from_attributes": True}

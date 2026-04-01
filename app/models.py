@@ -36,3 +36,31 @@ class Photo(Base):
     photo_url: Mapped[str] = mapped_column(String, nullable=False)
     order: Mapped[int] = mapped_column(Integer, default=0)
     postal: Mapped["Postal"] = relationship("Postal", back_populates="photos")
+
+class PopularSong(Base):
+    __tablename__ = "popular_songs"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    title: Mapped[str] = mapped_column(String(200), nullable=False)
+    cover_url: Mapped[str | None] = mapped_column(String, nullable=True)
+    audio_url: Mapped[str | None] = mapped_column(String, nullable=True)
+    order: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+
+class Album(Base):
+    __tablename__ = "albums"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    title: Mapped[str] = mapped_column(String(200), nullable=False)
+    cover_url: Mapped[str | None] = mapped_column(String, nullable=True)
+    year: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    order: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    tracks: Mapped[list["AlbumTrack"]] = relationship("AlbumTrack", back_populates="album", cascade="all, delete", order_by="AlbumTrack.order")
+
+class AlbumTrack(Base):
+    __tablename__ = "album_tracks"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    album_id: Mapped[int] = mapped_column(ForeignKey("albums.id"), nullable=False)
+    title: Mapped[str] = mapped_column(String(200), nullable=False)
+    audio_url: Mapped[str | None] = mapped_column(String, nullable=True)
+    order: Mapped[int] = mapped_column(Integer, default=0)
+    album: Mapped["Album"] = relationship("Album", back_populates="tracks")
