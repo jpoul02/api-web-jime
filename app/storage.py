@@ -40,7 +40,7 @@ async def upload_audio(file: UploadFile, folder: str) -> str:
     )
     return result["secure_url"]
 
-async def upload_audio_bytes(data: bytes, folder: str, filename: str) -> str:
+async def upload_audio_bytes(data: bytes, folder: str) -> str:
     """Upload raw audio bytes (e.g. from yt-dlp) to Cloudinary."""
     public_id = f"{folder}/{uuid.uuid4()}"
     result = await asyncio.to_thread(
