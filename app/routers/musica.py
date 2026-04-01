@@ -161,29 +161,50 @@ async def delete_track(track_id: int, db: AsyncSession = Depends(get_db)):
 # ── YouTube Download ──────────────────────────────────────────────────────────
 
 async def _download_youtube(url: str) -> str:
-    """Download audio from YouTube URL and upload to Cloudinary. Returns audio URL."""
+    """Download audio from YouTube URL and upload to Cloudinary.
+    Tries multiple player clients to avoid bot-detection on server IPs.
+    Raises HTTPException(400) with a friendly message if all attempts fail.
+    """
     import yt_dlp
 
-    with tempfile.TemporaryDirectory() as tmp:
-        out_path = os.path.join(tmp, "audio.%(ext)s")
-        # Prefer m4a (native, no FFmpeg needed), fallback to any bestaudio
-        ydl_opts = {
-            "format": "bestaudio[ext=m4a]/bestaudio/best",
-            "outtmpl": out_path,
-            "quiet": True,
-            "no_warnings": True,
-        }
+    # Try these clients in order — android/ios often bypass bot detection
+    CLIENTS = ["android", "ios", "mweb", "web"]
 
-        def _run():
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                ydl.download([url])
-            files = os.listdir(tmp)
-            if not files:
-                raise RuntimeError("yt-dlp no generó archivo de audio")
-            return os.path.join(tmp, files[0])
+    last_error: str = ""
 
-        audio_path = await asyncio.to_thread(_run)
-        with open(audio_path, "rb") as f:
-            data = f.read()
+    for client in CLIENTS:
+        try:
+            with tempfile.TemporaryDirectory() as tmp:
+                out_path = os.path.join(tmp, "audio.%(ext)s")
+                ydl_opts = {
+                    "format": "bestaudio[ext=m4a]/bestaudio/best",
+                    "outtmpl": out_path,
+                    "quiet": True,
+                    "no_warnings": True,
+                    "extractor_args": {"youtube": {"player_client": [client]}},
+                }
 
-    return await upload_audio_bytes(data, "music/audio")
+                def _run(opts=ydl_opts, d=tmp):
+                    with yt_dlp.YoutubeDL(opts) as ydl:
+                        ydl.download([url])
+                    files = os.listdir(d)
+                    if not files:
+                        raise RuntimeError("yt-dlp no generó archivo")
+                    return os.path.join(d, files[0])
+
+                audio_path = await asyncio.to_thread(_run)
+                with open(audio_path, "rb") as f:
+                    data = f.read()
+
+            return await upload_audio_bytes(data, "music/audio")
+
+        except Exception as e:
+            last_error = str(e)
+            continue
+
+    raise HTTPException(
+        400,
+        "YouTube bloqueó la descarga desde el servidor. "
+        "Descargá el audio manualmente (ej. con yt-dlp en tu PC o desde cobalt.tools) "
+        f"y subilo como archivo. Detalle: {last_error[:200]}"
+    )
