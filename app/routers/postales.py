@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
 from app import crud
-from app.schemas import PostalOut, PostalListItem, FeedItem, AnswerIn, AnswerFeedItem, AskStats
+from app.schemas import PostalOut, PostalListItem, FeedItem, AnswerIn, AnswerFeedItem, AskStats, VideoPostalItem
 from app.storage import upload_file, maybe_upload
 
 router = APIRouter(prefix="/postales", tags=["postales"])
@@ -45,6 +45,10 @@ async def list_postales(db: AsyncSession = Depends(get_db)):
 async def get_feed(skip: int = 0, limit: int = 10, db: AsyncSession = Depends(get_db)):
     limit = min(limit, 20)
     return await crud.get_feed_postales(db, skip, limit)
+
+@router.get("/videos", response_model=list[VideoPostalItem])
+async def get_video_postales(db: AsyncSession = Depends(get_db)):
+    return await crud.get_video_postales(db)
 
 @router.get("/answers-feed", response_model=list[AnswerFeedItem])
 async def get_answers_feed(skip: int = 0, limit: int = 10, db: AsyncSession = Depends(get_db)):

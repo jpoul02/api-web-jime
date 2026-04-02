@@ -57,6 +57,15 @@ class FeedItem(BaseModel):
     photos: list[FeedPhotoItem] = []
     model_config = {"from_attributes": True}
 
+# ── Video postales ───────────────────────────────────────────────────────────
+
+class VideoPostalItem(BaseModel):
+    id: int
+    name: str
+    profile_photo_url: str | None
+    video_url: str
+    model_config = {"from_attributes": True}
+
 # ── Ask feed ─────────────────────────────────────────────────────────────────
 
 class AnswerFeedItem(BaseModel):

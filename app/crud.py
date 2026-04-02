@@ -57,6 +57,14 @@ async def get_feed_postales(db: AsyncSession, skip: int = 0, limit: int = 10) ->
     result = await db.execute(stmt)
     return result.scalars().all()
 
+async def get_video_postales(db: AsyncSession) -> list[Postal]:
+    result = await db.execute(
+        select(Postal)
+        .where(Postal.video_url.isnot(None))
+        .order_by(Postal.created_at.desc())
+    )
+    return result.scalars().all()
+
 async def get_answers_feed(db: AsyncSession, skip: int = 0, limit: int = 10):
     """Flat list of answers with question text + postal author info, for Ask.fm feed."""
     from sqlalchemy.orm import selectinload
