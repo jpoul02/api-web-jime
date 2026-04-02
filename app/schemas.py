@@ -57,6 +57,21 @@ class FeedItem(BaseModel):
     photos: list[FeedPhotoItem] = []
     model_config = {"from_attributes": True}
 
+# ── Ask feed ─────────────────────────────────────────────────────────────────
+
+class AnswerFeedItem(BaseModel):
+    id: int
+    question_text: str
+    answer_text: str
+    name: str
+    profile_photo_url: str | None
+    created_at: datetime
+    model_config = {"from_attributes": True}
+
+class AskStats(BaseModel):
+    total_postales: int
+    total_answers: int
+
 # ── Music ────────────────────────────────────────────────────────────────────
 
 class PopularSongOut(BaseModel):

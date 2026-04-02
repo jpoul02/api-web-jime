@@ -57,6 +57,37 @@ async def get_feed_postales(db: AsyncSession, skip: int = 0, limit: int = 10) ->
     result = await db.execute(stmt)
     return result.scalars().all()
 
+async def get_answers_feed(db: AsyncSession, skip: int = 0, limit: int = 10):
+    """Flat list of answers with question text + postal author info, for Ask.fm feed."""
+    from sqlalchemy.orm import selectinload
+    stmt = (
+        select(Answer)
+        .options(selectinload(Answer.question), selectinload(Answer.postal))
+        .join(Answer.postal)
+        .order_by(Postal.created_at.desc(), Answer.id)
+        .offset(skip)
+        .limit(limit)
+    )
+    result = await db.execute(stmt)
+    rows = result.scalars().all()
+    return [
+        {
+            "id": a.id,
+            "question_text": a.question.text,
+            "answer_text": a.answer_text,
+            "name": a.postal.name,
+            "profile_photo_url": a.postal.profile_photo_url,
+            "created_at": a.postal.created_at,
+        }
+        for a in rows
+    ]
+
+async def get_ask_stats(db: AsyncSession) -> dict:
+    from sqlalchemy import func as sqlfunc
+    postales_count = (await db.execute(select(sqlfunc.count()).select_from(Postal))).scalar_one()
+    answers_count = (await db.execute(select(sqlfunc.count()).select_from(Answer))).scalar_one()
+    return {"total_postales": postales_count, "total_answers": answers_count}
+
 async def delete_postal(db: AsyncSession, postal_id: int) -> bool:
     postal = await db.get(Postal, postal_id)
     if not postal:
