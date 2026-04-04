@@ -72,7 +72,7 @@ async def get_answers_feed(db: AsyncSession, skip: int = 0, limit: int = 10):
         select(Answer)
         .options(selectinload(Answer.question), selectinload(Answer.postal))
         .join(Answer.postal)
-        .order_by(Postal.created_at.desc(), Answer.id)
+        .order_by(func.random())
         .offset(skip)
         .limit(limit)
     )
