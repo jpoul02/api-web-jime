@@ -52,7 +52,7 @@ async def get_video_postales(db: AsyncSession = Depends(get_db)):
 
 @router.get("/answers-feed", response_model=list[AnswerFeedItem])
 async def get_answers_feed(skip: int = 0, limit: int = 10, db: AsyncSession = Depends(get_db)):
-    limit = min(limit, 20)
+    limit = min(limit, 500)
     return await crud.get_answers_feed(db, skip, limit)
 
 @router.get("/stats", response_model=AskStats)
