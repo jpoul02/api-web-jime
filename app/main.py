@@ -9,7 +9,7 @@ load_dotenv()
 
 from app.database import engine, async_session_factory, Base
 from app.models import Question
-from app.routers import questions, postales, musica
+from app.routers import questions, postales, musica, historia
 from sqlalchemy import text
 
 async def _seed():
@@ -62,6 +62,7 @@ app.add_middleware(
 app.include_router(questions.router)
 app.include_router(postales.router)
 app.include_router(musica.router)
+app.include_router(historia.router)
 
 @app.get("/health")
 async def health():
