@@ -23,13 +23,13 @@ async def create_slide(
     date: str = Form(...),
     title: str = Form(...),
     desc: str = Form(...),
-    type: str = Form(...),
+    slide_type: str = Form(...),
     emoji: str | None = Form(None),
     photo: UploadFile | None = File(None),
     db: AsyncSession = Depends(get_db),
 ):
     img_url = await maybe_upload(photo, "historia/slides") if photo else None
-    return await crud.create_historia_slide(db, date, title, desc, type, img_url, emoji)
+    return await crud.create_historia_slide(db, date, title, desc, slide_type, img_url, emoji)
 
 @router.patch("/slides/{slide_id}", response_model=HistoriaSlideOut)
 async def update_slide(
@@ -37,13 +37,13 @@ async def update_slide(
     date: str | None = Form(None),
     title: str | None = Form(None),
     desc: str | None = Form(None),
-    type: str | None = Form(None),
+    slide_type: str | None = Form(None),
     emoji: str | None = Form(None),
     photo: UploadFile | None = File(None),
     db: AsyncSession = Depends(get_db),
 ):
     img_url = await maybe_upload(photo, "historia/slides") if photo else None
-    slide = await crud.update_historia_slide(db, slide_id, date, title, desc, type, img_url, emoji)
+    slide = await crud.update_historia_slide(db, slide_id, date, title, desc, slide_type, img_url, emoji)
     if not slide:
         raise HTTPException(404, "Slide no encontrado")
     return slide
