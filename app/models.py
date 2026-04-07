@@ -64,3 +64,21 @@ class AlbumTrack(Base):
     audio_url: Mapped[str | None] = mapped_column(String, nullable=True)
     order: Mapped[int] = mapped_column(Integer, default=0)
     album: Mapped["Album"] = relationship("Album", back_populates="tracks")
+
+class HistoriaSlide(Base):
+    __tablename__ = "historia_slides"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    date: Mapped[str] = mapped_column(String(80), nullable=False)
+    title: Mapped[str] = mapped_column(String(200), nullable=False)
+    desc: Mapped[str] = mapped_column(String, nullable=False)
+    type: Mapped[str] = mapped_column(String(20), nullable=False)   # "text" | "arch" | "fullbleed"
+    img_url: Mapped[str | None] = mapped_column(String, nullable=True)
+    emoji: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    order: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+
+class MomentoFavorito(Base):
+    __tablename__ = "momentos_favoritos"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    photo_url: Mapped[str] = mapped_column(String, nullable=False)
+    order: Mapped[int] = mapped_column(Integer, default=0)
