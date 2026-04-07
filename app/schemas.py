@@ -106,3 +106,22 @@ class AlbumOut(BaseModel):
     order: int
     tracks: list[AlbumTrackOut] = []
     model_config = {"from_attributes": True}
+
+# ── Historia ─────────────────────────────────────────────────────────────────
+
+class HistoriaSlideOut(BaseModel):
+    id: int
+    date: str
+    title: str
+    desc: str
+    type: str
+    img_url: str | None = None
+    emoji: str | None = None
+    order: int
+    model_config = {"from_attributes": True}
+
+class MomentoFavoritoOut(BaseModel):
+    id: int
+    photo_url: str
+    order: int
+    model_config = {"from_attributes": True}
