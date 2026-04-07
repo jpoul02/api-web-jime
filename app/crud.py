@@ -1,7 +1,7 @@
 # app/crud.py
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
-from app.models import Question, Postal, Answer, Photo, PopularSong, Album, AlbumTrack
+from app.models import Question, Postal, Answer, Photo, PopularSong, Album, AlbumTrack, HistoriaSlide, MomentoFavorito
 from app.schemas import AnswerIn
 
 async def get_random_questions(db: AsyncSession, count: int, exclude: list[int]) -> list[Question]:
@@ -231,3 +231,103 @@ async def delete_track(db: AsyncSession, track_id: int) -> bool:
     await db.delete(track)
     await db.commit()
     return True
+
+# ── Historia Slides ───────────────────────────────────────────────────────────
+
+async def get_historia_slides(db: AsyncSession) -> list[HistoriaSlide]:
+    result = await db.execute(select(HistoriaSlide).order_by(HistoriaSlide.order))
+    return result.scalars().all()
+
+async def create_historia_slide(
+    db: AsyncSession,
+    date: str,
+    title: str,
+    desc: str,
+    type_: str,
+    img_url: str | None,
+    emoji: str | None,
+) -> HistoriaSlide:
+    slides = await get_historia_slides(db)
+    slide = HistoriaSlide(
+        date=date, title=title, desc=desc, type=type_,
+        img_url=img_url, emoji=emoji, order=len(slides),
+    )
+    db.add(slide)
+    await db.commit()
+    await db.refresh(slide)
+    return slide
+
+async def update_historia_slide(
+    db: AsyncSession,
+    slide_id: int,
+    date: str | None,
+    title: str | None,
+    desc: str | None,
+    type_: str | None,
+    img_url: str | None,
+    emoji: str | None,
+) -> HistoriaSlide | None:
+    slide = await db.get(HistoriaSlide, slide_id)
+    if not slide:
+        return None
+    if date is not None:
+        slide.date = date
+    if title is not None:
+        slide.title = title
+    if desc is not None:
+        slide.desc = desc
+    if type_ is not None:
+        slide.type = type_
+    if img_url is not None:
+        slide.img_url = img_url
+    if emoji is not None:
+        slide.emoji = emoji
+    await db.commit()
+    await db.refresh(slide)
+    return slide
+
+async def delete_historia_slide(db: AsyncSession, slide_id: int) -> bool:
+    slide = await db.get(HistoriaSlide, slide_id)
+    if not slide:
+        return False
+    await db.delete(slide)
+    await db.commit()
+    return True
+
+async def reorder_historia_slides(db: AsyncSession, ids: list[int]) -> list[HistoriaSlide]:
+    for i, sid in enumerate(ids):
+        slide = await db.get(HistoriaSlide, sid)
+        if slide:
+            slide.order = i
+    await db.commit()
+    return await get_historia_slides(db)
+
+# ── Momentos Favoritos ────────────────────────────────────────────────────────
+
+async def get_momentos_favoritos(db: AsyncSession) -> list[MomentoFavorito]:
+    result = await db.execute(select(MomentoFavorito).order_by(MomentoFavorito.order))
+    return result.scalars().all()
+
+async def create_momento_favorito(db: AsyncSession, photo_url: str) -> MomentoFavorito:
+    momentos = await get_momentos_favoritos(db)
+    m = MomentoFavorito(photo_url=photo_url, order=len(momentos))
+    db.add(m)
+    await db.commit()
+    await db.refresh(m)
+    return m
+
+async def delete_momento_favorito(db: AsyncSession, momento_id: int) -> bool:
+    m = await db.get(MomentoFavorito, momento_id)
+    if not m:
+        return False
+    await db.delete(m)
+    await db.commit()
+    return True
+
+async def reorder_momentos_favoritos(db: AsyncSession, ids: list[int]) -> list[MomentoFavorito]:
+    for i, mid in enumerate(ids):
+        m = await db.get(MomentoFavorito, mid)
+        if m:
+            m.order = i
+    await db.commit()
+    return await get_momentos_favoritos(db)
