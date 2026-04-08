@@ -125,3 +125,12 @@ class MomentoFavoritoOut(BaseModel):
     photo_url: str
     order: int
     model_config = {"from_attributes": True}
+
+# ── Carta ────────────────────────────────────────────────────────────────────
+
+class CartaIn(BaseModel):
+    texto: str
+
+class CartaOut(BaseModel):
+    texto: str | None = None
+    model_config = {"from_attributes": True}

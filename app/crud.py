@@ -1,7 +1,7 @@
 # app/crud.py
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
-from app.models import Question, Postal, Answer, Photo, PopularSong, Album, AlbumTrack, HistoriaSlide, MomentoFavorito
+from app.models import Question, Postal, Answer, Photo, PopularSong, Album, AlbumTrack, HistoriaSlide, MomentoFavorito, Carta
 from app.schemas import AnswerIn
 
 async def get_random_questions(db: AsyncSession, count: int, exclude: list[int]) -> list[Question]:
@@ -331,3 +331,19 @@ async def reorder_momentos_favoritos(db: AsyncSession, ids: list[int]) -> list[M
             m.order = i
     await db.commit()
     return await get_momentos_favoritos(db)
+
+# ── Carta ─────────────────────────────────────────────────────────────────────
+
+async def get_carta(db: AsyncSession) -> Carta | None:
+    return await db.get(Carta, 1)
+
+async def upsert_carta(db: AsyncSession, texto: str) -> Carta:
+    carta = await db.get(Carta, 1)
+    if carta:
+        carta.texto = texto
+    else:
+        carta = Carta(id=1, texto=texto)
+        db.add(carta)
+    await db.commit()
+    await db.refresh(carta)
+    return carta
