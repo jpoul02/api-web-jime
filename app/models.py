@@ -82,3 +82,11 @@ class MomentoFavorito(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     photo_url: Mapped[str] = mapped_column(String, nullable=False)
     order: Mapped[int] = mapped_column(Integer, default=0)
+
+class Carta(Base):
+    __tablename__ = "carta"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, default=1)
+    texto: Mapped[str | None] = mapped_column(String, nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now(), onupdate=func.now()
+    )
