@@ -59,6 +59,12 @@ async def get_answers_feed(skip: int = 0, limit: int = 10, db: AsyncSession = De
 async def get_stats(db: AsyncSession = Depends(get_db)):
     return await crud.get_ask_stats(db)
 
+@router.delete("/answers/{answer_id}", status_code=204)
+async def delete_answer(answer_id: int, db: AsyncSession = Depends(get_db)):
+    deleted = await crud.delete_answer(db, answer_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Answer not found")
+
 @router.get("/{postal_id}", response_model=PostalOut)
 async def get_postal(postal_id: int, db: AsyncSession = Depends(get_db)):
     postal = await crud.get_postal(db, postal_id)
