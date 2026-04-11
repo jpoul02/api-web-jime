@@ -29,6 +29,16 @@ class Answer(Base):
     feed_order: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
     postal: Mapped["Postal"] = relationship("Postal", back_populates="answers")
     question: Mapped["Question"] = relationship("Question")
+    media: Mapped[list["AnswerMedia"]] = relationship("AnswerMedia", back_populates="answer", cascade="all, delete", order_by="AnswerMedia.order")
+
+class AnswerMedia(Base):
+    __tablename__ = "answer_media"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    answer_id: Mapped[int] = mapped_column(ForeignKey("answers.id"), nullable=False)
+    media_url: Mapped[str] = mapped_column(String, nullable=False)
+    media_type: Mapped[str] = mapped_column(String(10), nullable=False, default="image")  # "image" | "video"
+    order: Mapped[int] = mapped_column(Integer, default=0)
+    answer: Mapped["Answer"] = relationship("Answer", back_populates="media")
 
 class Photo(Base):
     __tablename__ = "photos"

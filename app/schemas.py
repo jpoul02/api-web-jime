@@ -17,11 +17,19 @@ class PhotoOut(BaseModel):
     order: int
     model_config = {"from_attributes": True}
 
+class AnswerMediaOut(BaseModel):
+    id: int
+    media_url: str
+    media_type: str
+    order: int
+    model_config = {"from_attributes": True}
+
 class AnswerOut(BaseModel):
     id: int
     question_id: int
     answer_text: str
     question: QuestionOut
+    media: list[AnswerMediaOut] = []
     model_config = {"from_attributes": True}
 
 class PostalOut(BaseModel):
@@ -75,6 +83,7 @@ class AnswerFeedItem(BaseModel):
     name: str
     profile_photo_url: str | None
     created_at: datetime
+    media: list[AnswerMediaOut] = []
     model_config = {"from_attributes": True}
 
 class AskStats(BaseModel):

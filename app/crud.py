@@ -2,7 +2,7 @@
 import random
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, update
-from app.models import Question, Postal, Answer, Photo, PopularSong, Album, AlbumTrack, HistoriaSlide, MomentoFavorito, Carta
+from app.models import Question, Postal, Answer, AnswerMedia, Photo, PopularSong, Album, AlbumTrack, HistoriaSlide, MomentoFavorito, Carta
 from app.schemas import AnswerIn
 
 async def get_random_questions(db: AsyncSession, count: int, exclude: list[int]) -> list[Question]:
@@ -35,7 +35,11 @@ async def create_postal(
     # Re-fetch with eager loading to avoid lazy-load greenlet errors
     result = await db.execute(
         select(Postal)
-        .options(selectinload(Postal.answers).selectinload(Answer.question), selectinload(Postal.photos))
+        .options(
+            selectinload(Postal.answers).selectinload(Answer.question),
+            selectinload(Postal.answers).selectinload(Answer.media),
+            selectinload(Postal.photos),
+        )
         .where(Postal.id == postal.id)
     )
     return result.scalar_one()
@@ -82,7 +86,11 @@ async def get_answers_feed(db: AsyncSession, skip: int = 0, limit: int = 10):
     from sqlalchemy import nulls_last
     stmt = (
         select(Answer)
-        .options(selectinload(Answer.question), selectinload(Answer.postal))
+        .options(
+            selectinload(Answer.question),
+            selectinload(Answer.postal),
+            selectinload(Answer.media),
+        )
         .join(Answer.postal)
         .order_by(nulls_last(Answer.feed_order))
         .offset(skip)
@@ -98,9 +106,41 @@ async def get_answers_feed(db: AsyncSession, skip: int = 0, limit: int = 10):
             "name": a.postal.name,
             "profile_photo_url": a.postal.profile_photo_url,
             "created_at": a.postal.created_at,
+            "media": [{"id": m.id, "media_url": m.media_url, "media_type": m.media_type, "order": m.order} for m in a.media],
         }
         for a in rows
     ]
+
+async def patch_answer_text(db: AsyncSession, answer_id: int, text: str) -> Answer | None:
+    answer = await db.get(Answer, answer_id)
+    if not answer:
+        return None
+    answer.answer_text = text
+    await db.commit()
+    await db.refresh(answer)
+    return answer
+
+async def add_answer_media(db: AsyncSession, answer_id: int, media_url: str, media_type: str) -> AnswerMedia | None:
+    answer = await db.get(Answer, answer_id)
+    if not answer:
+        return None
+    count_result = await db.execute(
+        select(func.count()).select_from(AnswerMedia).where(AnswerMedia.answer_id == answer_id)
+    )
+    order = count_result.scalar_one()
+    media = AnswerMedia(answer_id=answer_id, media_url=media_url, media_type=media_type, order=order)
+    db.add(media)
+    await db.commit()
+    await db.refresh(media)
+    return media
+
+async def delete_answer_media(db: AsyncSession, media_id: int) -> bool:
+    media = await db.get(AnswerMedia, media_id)
+    if not media:
+        return False
+    await db.delete(media)
+    await db.commit()
+    return True
 
 async def get_ask_stats(db: AsyncSession) -> dict:
     from sqlalchemy import func as sqlfunc
@@ -128,7 +168,11 @@ async def get_postal(db: AsyncSession, postal_id: int) -> Postal | None:
     from sqlalchemy.orm import selectinload
     result = await db.execute(
         select(Postal)
-        .options(selectinload(Postal.answers).selectinload(Answer.question), selectinload(Postal.photos))
+        .options(
+            selectinload(Postal.answers).selectinload(Answer.question),
+            selectinload(Postal.answers).selectinload(Answer.media),
+            selectinload(Postal.photos),
+        )
         .where(Postal.id == postal_id)
     )
     return result.scalar_one_or_none()
