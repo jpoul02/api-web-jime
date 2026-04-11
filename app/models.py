@@ -26,6 +26,7 @@ class Answer(Base):
     postal_id: Mapped[int] = mapped_column(ForeignKey("postales.id"), nullable=False)
     question_id: Mapped[int] = mapped_column(ForeignKey("questions.id"), nullable=False)
     answer_text: Mapped[str] = mapped_column(String, nullable=False)
+    feed_order: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
     postal: Mapped["Postal"] = relationship("Postal", back_populates="answers")
     question: Mapped["Question"] = relationship("Question")
 

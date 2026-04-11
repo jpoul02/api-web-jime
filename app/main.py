@@ -20,6 +20,9 @@ async def _seed():
         await conn.execute(text(
             "ALTER TABLE postales ADD COLUMN IF NOT EXISTS dedicatoria TEXT"
         ))
+        await conn.execute(text(
+            "ALTER TABLE answers ADD COLUMN IF NOT EXISTS feed_order INTEGER"
+        ))
     async with async_session_factory() as session:
         result = await session.execute(select(Question))
         if result.scalars().first():

@@ -1,6 +1,7 @@
 # app/crud.py
+import random
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
+from sqlalchemy import select, func, update
 from app.models import Question, Postal, Answer, Photo, PopularSong, Album, AlbumTrack, HistoriaSlide, MomentoFavorito, Carta
 from app.schemas import AnswerIn
 
@@ -30,6 +31,7 @@ async def create_postal(
     for i, url in enumerate(photo_urls):
         db.add(Photo(postal_id=postal.id, photo_url=url, order=i))
     await db.commit()
+    await reshuffle_answers_feed(db)
     # Re-fetch with eager loading to avoid lazy-load greenlet errors
     result = await db.execute(
         select(Postal)
@@ -65,14 +67,24 @@ async def get_video_postales(db: AsyncSession) -> list[Postal]:
     )
     return result.scalars().all()
 
+async def reshuffle_answers_feed(db: AsyncSession) -> None:
+    """Assign a new random feed_order to every answer and persist it."""
+    result = await db.execute(select(Answer.id))
+    ids: list[int] = list(result.scalars().all())
+    random.shuffle(ids)
+    for order, answer_id in enumerate(ids):
+        await db.execute(update(Answer).where(Answer.id == answer_id).values(feed_order=order))
+    await db.commit()
+
 async def get_answers_feed(db: AsyncSession, skip: int = 0, limit: int = 10):
     """Flat list of answers with question text + postal author info, for Ask.fm feed."""
     from sqlalchemy.orm import selectinload
+    from sqlalchemy import nulls_last
     stmt = (
         select(Answer)
         .options(selectinload(Answer.question), selectinload(Answer.postal))
         .join(Answer.postal)
-        .order_by(func.random())
+        .order_by(nulls_last(Answer.feed_order))
         .offset(skip)
         .limit(limit)
     )
