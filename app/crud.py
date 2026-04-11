@@ -164,6 +164,14 @@ async def delete_answer(db: AsyncSession, answer_id: int) -> bool:
     await db.commit()
     return True
 
+async def delete_postal_photo(db: AsyncSession, photo_id: int) -> bool:
+    photo = await db.get(Photo, photo_id)
+    if not photo:
+        return False
+    await db.delete(photo)
+    await db.commit()
+    return True
+
 async def get_postal(db: AsyncSession, postal_id: int) -> Postal | None:
     from sqlalchemy.orm import selectinload
     result = await db.execute(

@@ -96,6 +96,12 @@ async def delete_answer(answer_id: int, db: AsyncSession = Depends(get_db)):
     if not deleted:
         raise HTTPException(status_code=404, detail="Answer not found")
 
+@router.delete("/{postal_id}/photos/{photo_id}", status_code=204)
+async def delete_postal_photo(postal_id: int, photo_id: int, db: AsyncSession = Depends(get_db)):
+    deleted = await crud.delete_postal_photo(db, photo_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Photo not found")
+
 @router.get("/{postal_id}", response_model=PostalOut)
 async def get_postal(postal_id: int, db: AsyncSession = Depends(get_db)):
     postal = await crud.get_postal(db, postal_id)
